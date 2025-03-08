@@ -220,32 +220,32 @@ function selectMods( g_data ) {
 
 			//callback in closure with file details
 			reader.onload = (function(f) {
-				return function(e) {
-					if (e && e.target && e.target.result) {
-						g_data.upload_mods_to_load.push(f.name);
-						g_data.upload_data[f.name] = e.target.result;
+			return function(e) {
+				if (e && e.target && e.target.result) {
+					g_data.upload_mods_to_load.push(f.name);
+					g_data.upload_data[f.name] = e.target.result;
 
-						$('ul#custom-mod-list li[title=\''+f.name+'\']').remove();
-						$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+'</li>');
-						$('#clear-custom-mods-btn').css('visibility', 'visible');
-					} else {
-						DMI.Utils.error('Error reading local file: '+f.name);
-					}
-				};
+					$('ul#custom-mod-list li[title=\''+f.name+'\']').remove();
+					$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+'</li>');
+					$('#clear-custom-mods-btn').css('visibility', 'visible');
+				} else {
+					DMI.Utils.error('Error reading local file: '+f.name);
+				}
+			};
 			})(f);
 			// Read in the file as a data URL.
 			reader.readAsText(f);
 		}
 	}
 
-    function handleFileSelect(evt) {
-        if (! (evt && evt.target && evt.target.files)) {
-            Utils.error('Not supported in this browser.');
-            return;
-        }
-        var files = evt.target.files;
-        processFiles(files);
-    }
+	function handleFileSelect(evt) {
+		if (! (evt && evt.target && evt.target.files)) {
+			Utils.error('Not supported in this browser.');
+			return;
+		}
+		var files = evt.target.files;
+		processFiles(files);
+	}
     
     
 	function setupDragAndDrop() {
@@ -276,7 +276,7 @@ function selectMods( g_data ) {
 			}, false);
 		});
 	
-		// Handle dropped files - use the same file processing logic as the file input
+		// Handle dropped files
 		dropZone.addEventListener('drop', function(e) {
 			var files = e.dataTransfer.files;
 			if (files.length > 0) {
@@ -285,20 +285,22 @@ function selectMods( g_data ) {
 		}, false);
 	}
 	
-	// Refactor the existing file handling logic to be used by both file input and drop
 	function handleFiles(files) {
 		for (var i = 0, f; f = files[i]; i++) {
 			var reader = new FileReader();
-	
+
 			reader.onload = (function(f) {
 				return function(e) {
 					if (e && e.target && e.target.result) {
 						g_data.upload_mods_to_load.push(f.name);
 						g_data.upload_data[f.name] = e.target.result;
-	
+
 						$('ul#custom-mod-list li[title=\''+f.name+'\']').remove();
-						$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+'</li>');
+						$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+' <span class="remove-mod" data-mod="'+f.name+'">✕</span></li>');
 						$('#clear-custom-mods-btn').css('visibility', 'visible');
+						
+						// Add click handler for the new remove button
+						attachRemoveHandlers();
 					} else {
 						Utils.error('Error reading local file: '+f.name);
 					}
@@ -307,7 +309,48 @@ function selectMods( g_data ) {
 			reader.readAsText(f);
 		}
 	}
-	
+
+	// Function to attach click handlers to remove buttons
+	function attachRemoveHandlers() {
+		$('.remove-mod').off('click').on('click', function(e) {
+			e.stopPropagation();
+			var modName = $(this).data('mod');
+			
+			// Remove from upload mods list
+			var uploadIndex = g_data.upload_mods_to_load.indexOf(modName);
+			if (uploadIndex > -1) {
+				g_data.upload_mods_to_load.splice(uploadIndex, 1);
+				delete g_data.upload_data[modName];
+			}
+			
+			// Remove from local mods list
+			var localIndex = g_data.local_mods_to_load.indexOf(modName);
+			if (localIndex > -1) {
+				g_data.local_mods_to_load.splice(localIndex, 1);
+			}
+			
+			// Remove the list item
+			$(this).parent().remove();
+			
+			// Hide the list and button if no more mods
+			if ($('ul#custom-mod-list li').length === 0) {
+				$('ul#custom-mod-list').hide();
+				$('#clear-custom-mods-btn').css('visibility', 'hidden');
+			}
+		});
+	}
+
+	// Show modlist with remove buttons
+	for (var i=0, m; m=g_data.local_mods_to_load[i]; i++) {
+		$('ul#custom-mod-list').show().append('<li title="'+m+'">'+m+' <span style="font-weight:normal;color:black;font-style:italic;">&nbsp;(stored copy)</span> <span class="remove-mod" data-mod="'+m+'">✕</span></li>');
+		$('#clear-custom-mods-btn').css('visibility', 'visible');
+	}
+
+	attachRemoveHandlers();
+
+	// X button styling
+	$('<style>.remove-mod { cursor: pointer; color: #cc0000; font-weight: bold; margin-left: 8px; } .remove-mod:hover { color: #ff0000; }</style>').appendTo('head');
+		
 	$('#load-custom-mod').bind('change', function(evt) {
 		if (!(evt && evt.target && evt.target.files)) {
 			Utils.error('File input not supported in this browser.');
@@ -318,8 +361,8 @@ function selectMods( g_data ) {
 	
 	// Initialize drag and drop
 	setupDragAndDrop();
-    
-    $('#load-custom-mod').bind('change', handleFileSelect);
+	
+	$('#load-custom-mod').bind('change', handleFileSelect);
 	$('#clear-custom-mods-btn').click(function(){
 		g_data.local_mods_to_load = [];
 		g_data.upload_mods_to_load =   [];
@@ -329,11 +372,6 @@ function selectMods( g_data ) {
 		$(this).css('visibility', 'hidden');
 	}).css('visibility', 'hidden');
 
-	//show local mods
-	for (var i=0, m; m=g_data.local_mods_to_load[i]; i++) {
-		$('ul#custom-mod-list').show().append('<li title="'+m+'">'+m+' <span style="font-weight:normal;color:black;font-style:italic;">&nbsp;(stored copy)</span></li>');
-		$('#clear-custom-mods-btn').css('visibility', 'visible');
-	}
 
 	//submit on enter
 	$('html').keypress(function(e){
