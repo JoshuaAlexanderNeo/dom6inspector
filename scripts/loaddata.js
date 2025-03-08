@@ -214,39 +214,112 @@ function selectMods( g_data ) {
 		});
 	});
 
-	//load local mod files
-	function handleFileSelect(evt) {
-		if (! (evt && evt.target && evt.target.files)) {
-			Utils.error('Not supported in this browser.');
-			return;
-		}
-		var files = evt.target.files; // FileList object
-		//$('ul#custom-mod-list').hide().html('');
-
-		// Loop through the FileList
+	function processFiles(files) {
 		for (var i = 0, f; f = files[i]; i++) {
 			var reader = new FileReader();
 
 			//callback in closure with file details
 			reader.onload = (function(f) {
-			return function(e) {
-				if (e && e.target && e.target.result) {
-					g_data.upload_mods_to_load.push(f.name);
-					g_data.upload_data[f.name] = e.target.result;
+				return function(e) {
+					if (e && e.target && e.target.result) {
+						g_data.upload_mods_to_load.push(f.name);
+						g_data.upload_data[f.name] = e.target.result;
 
-					$('ul#custom-mod-list li[title=\''+f.name+'\']').remove();
-					$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+'</li>');
-					$('#clear-custom-mods-btn').css('visibility', 'visible');
-				} else {
-					DMI.Utils.error('Error reading local file: '+f.name);
-				}
-			};
+						$('ul#custom-mod-list li[title=\''+f.name+'\']').remove();
+						$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+'</li>');
+						$('#clear-custom-mods-btn').css('visibility', 'visible');
+					} else {
+						DMI.Utils.error('Error reading local file: '+f.name);
+					}
+				};
 			})(f);
 			// Read in the file as a data URL.
 			reader.readAsText(f);
 		}
 	}
-	$('#load-custom-mod').bind('change', handleFileSelect);
+
+    function handleFileSelect(evt) {
+        if (! (evt && evt.target && evt.target.files)) {
+            Utils.error('Not supported in this browser.');
+            return;
+        }
+        var files = evt.target.files;
+        processFiles(files);
+    }
+    
+    
+	function setupDragAndDrop() {
+		var dropZone = document.getElementById('drop-zone');
+		if (!dropZone) return;
+		
+		// Prevent default behavior to allow drop
+		['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+			dropZone.addEventListener(eventName, function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+			}, false);
+		});
+	
+		// Highlight drop zone when item is dragged over it
+		['dragenter', 'dragover'].forEach(function(eventName) {
+			dropZone.addEventListener(eventName, function() {
+				dropZone.style.backgroundColor = '#f0f7ff';
+				dropZone.style.borderColor = '#6699cc';
+			}, false);
+		});
+	
+		// Remove highlight when item is dragged out or dropped
+		['dragleave', 'drop'].forEach(function(eventName) {
+			dropZone.addEventListener(eventName, function() {
+				dropZone.style.backgroundColor = '';
+				dropZone.style.borderColor = '#ccc';
+			}, false);
+		});
+	
+		// Handle dropped files - use the same file processing logic as the file input
+		dropZone.addEventListener('drop', function(e) {
+			var files = e.dataTransfer.files;
+			if (files.length > 0) {
+				handleFiles(files);
+			}
+		}, false);
+	}
+	
+	// Refactor the existing file handling logic to be used by both file input and drop
+	function handleFiles(files) {
+		for (var i = 0, f; f = files[i]; i++) {
+			var reader = new FileReader();
+	
+			reader.onload = (function(f) {
+				return function(e) {
+					if (e && e.target && e.target.result) {
+						g_data.upload_mods_to_load.push(f.name);
+						g_data.upload_data[f.name] = e.target.result;
+	
+						$('ul#custom-mod-list li[title=\''+f.name+'\']').remove();
+						$('ul#custom-mod-list').show().append('<li title="'+f.name+'">'+f.name+'</li>');
+						$('#clear-custom-mods-btn').css('visibility', 'visible');
+					} else {
+						Utils.error('Error reading local file: '+f.name);
+					}
+				};
+			})(f);
+			reader.readAsText(f);
+		}
+	}
+	
+	$('#load-custom-mod').bind('change', function(evt) {
+		if (!(evt && evt.target && evt.target.files)) {
+			Utils.error('File input not supported in this browser.');
+			return;
+		}
+		handleFiles(evt.target.files);
+	});
+	
+	// Initialize drag and drop
+	setupDragAndDrop();
+    
+    $('#load-custom-mod').bind('change', handleFileSelect);
 	$('#clear-custom-mods-btn').click(function(){
 		g_data.local_mods_to_load = [];
 		g_data.upload_mods_to_load =   [];

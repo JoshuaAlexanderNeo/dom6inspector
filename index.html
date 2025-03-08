@@ -149,27 +149,34 @@
 	</div>
 	<div id="primary-filters">
 	
-		<!-- STARTUP MOD SELECTION -->
-		<form id="mod-selection" action="" style="display:none;">
-			<input type="button" value="X" id="clear-mods-btn" class="clear-filters-btn" title="clear selection" style="float:left;"/>
+	<!-- STARTUP MOD SELECTION -->
+	<form id="mod-selection" action="" style="display:none;">
+		<input type="button" value="X" id="clear-mods-btn" class="clear-filters-btn" title="clear selection" style="float:left;"/>
+		
+		<div id="mod-selection-list" ></div>
 			
-			<div id="mod-selection-list" ></div>
-				
-			<hr style="clear:both; padding-top:0.8em" />
-			
+		<hr style="clear:both; padding-top:0.8em" />
+		
+		<div id="drop-zone" style="border: 2px dashed #ccc; padding: 10px; margin-bottom: 10px;">
 			<p>
 			<input type="button" value="X" id="clear-custom-mods-btn" class="clear-filters-btn" title="clear selection" style="float:left;"/>
 				&nbsp;&nbsp;
 				<b>Local filesystem:</b>
 				<input type="file" id="load-custom-mod" name="file" multiple="multiple" />
-				(use ctrl to select multiple files)
+				<p>
+				&nbsp;&nbsp;
+				&nbsp;&nbsp;
+				&nbsp;&nbsp;
+				(use ctrl to select multiple files, or drag and drop files anywhere in this area)
+				</p>
 			</p>
 			<ul id="custom-mod-list" style="display:none; color:#AA0000; font-weight:bold;"></ul>
-	
-			<hr style="clear:both;" />
-			
-			<p><input type="submit" id="submit-mod-selection" value=" LOAD " name="submit" /></p>
-		</form>	
+		</div>
+		
+		<hr style="clear:both;" />
+		
+		<p><input type="submit" id="submit-mod-selection" value=" LOAD " name="submit" /></p>
+	</form>
 
         	<!-- TEXT SEARCH -->
 		<div class="filters-text  panel itemview">
